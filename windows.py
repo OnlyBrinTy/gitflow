@@ -31,8 +31,8 @@ class ExtraWindow:  # общий класс для всех окон интер�
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.display.quit()
                     self.running = False
+                    pygame.display.quit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         for button in self.buttons:
@@ -65,8 +65,7 @@ class SettingsWindow(ExtraWindow):
 
         super().__init__((easy_button, medium_button, hard_button))
 
-    @staticmethod
-    def action(button_text):
+    def action(self, button_text):
         pygame.display.quit()
 
         difficulty = {'easy': 1, 'medium': 2, 'hard': 3}[button_text]

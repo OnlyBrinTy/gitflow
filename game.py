@@ -10,7 +10,7 @@ BACKGROUND_COLOR = (33, 33, 33)
 GAME_NAME = 'Hotline Fortress'
 WIDTH, HEIGHT = pygame.display.Info().current_w, pygame.display.Info().current_h
 INITIAL_ZOOM = 3
-LAST_LEVEL = 3
+LAST_LEVEL = 1
 FPS = 60
 
 
@@ -69,7 +69,7 @@ class Camera(pygame.sprite.GroupSingle):
 
 class Game:
     # new_game - новая ли игра, difficulty - сложность от 1 до 3, level - номер уровня, score - накопленные очки
-    def start(self, new_game, difficulty=None, level=None, score=0):
+    def start(self, new_game, difficulty=None, level=None, saves_left=None, score=0):
         pygame.init()
 
         pygame.display.set_caption(GAME_NAME)
@@ -81,7 +81,8 @@ class Game:
 
         # загружаем новый уровень, если новая игра, иначе загружаем сохранённый прогресс
         # self.уровень, self.сложность, self.осталось сохранений, player_init, enemies_init
-        self.level, self.difficulty, self.saves_left, player_init, enemies_init = load_game(new_game, level, difficulty)
+        self.level, self.difficulty, self.saves_left, player_init, enemies_init\
+            = load_game(new_game, level, difficulty, saves_left)
         # player_init это (положение игрока, кол-во патронов и кол-во жизней)
 
         self.camera = Camera()  # через камеру происходит отображение всего на экране
@@ -130,7 +131,7 @@ class Game:
                 pygame.display.quit()
                 next_level = int(self.level[6]) + 1
                 if next_level <= LAST_LEVEL:    # запускаем следующий уровень
-                    return Game().start(True, difficulty, next_level, score + self.player.hp)
+                    return Game().start(True, self.difficulty, next_level, self.saves_left, score + self.player.hp)
 
                 return 'Congratulations!', score + self.player.hp
 
@@ -181,12 +182,13 @@ class Game:
         self.saves_left = max(0, self.saves_left - 1)
 
 
-def load_game(new_game, level, difficulty=None):   # считывание прогресса из файла
+def load_game(new_game, level, difficulty=None, saves_left=None):   # считывание прогресса из файла
     if new_game:    # это новая игра
         with open(f'progress/level_{level}_info.txt', mode='r') as file:
             level, player, enemies = tuple(map(lambda s: s.replace('\n', ''), file.readlines()))
 
-        saves_left = 6 // difficulty
+        if not saves_left:
+            saves_left = 6 // difficulty
     else:   # продолжили игру
         with open('progress/progress.txt', mode='r') as file:
             level, difficulty, saves_left, player, enemies = tuple(map(lambda s: s.replace('\n', ''), file.readlines()))
@@ -198,7 +200,7 @@ def load_game(new_game, level, difficulty=None):   # считывание про
     for i, (x, y, bullets, hp, speed) in enumerate(enemies):    # объединяем x, y в кортеж
         enemies[i] = (x, y), bullets, hp * int(difficulty), speed + int(difficulty)
 
-    return level, difficulty, int(saves_left), ((p_x, p_y), p_bullets, p_hp), enemies
+    return level, int(difficulty), int(saves_left), ((p_x, p_y), p_bullets, p_hp), enemies
 
 
 def check_angle(entity_pos, point_pos):   # определение угла поворота в зависимости от положения мыши
